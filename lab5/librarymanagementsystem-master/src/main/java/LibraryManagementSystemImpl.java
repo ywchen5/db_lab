@@ -37,7 +37,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             }
 
             String insert_sql = "INSERT INTO book (category, title, press, publish_year, author, price, stock) VALUES (?, ?, ?, ?, ?, ?, ?)"; // insert the book
-            pStmt = conn.prepareStatement(insert_sql);
+            pStmt = conn.prepareStatement(insert_sql, Statement.RETURN_GENERATED_KEYS);
             pStmt.setString(1, book.getCategory());
             pStmt.setString(2, book.getTitle());
             pStmt.setString(3, book.getPress());
@@ -102,24 +102,24 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             Connection conn = connector.getConn();
             String exist_check_sql = "SELECT 1 FROM book WHERE category = ? AND title = ? " +
                     "AND press = ? AND publish_year = ? AND author = ? LIMIT 1"; // check if the book already exists
+            String insert_sql = "INSERT INTO book (category, title, press, publish_year, author, price, stock) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)"; // insert the book
             PreparedStatement pStmt = conn.prepareStatement(exist_check_sql);
+            List<Integer> bookIds = new ArrayList<Integer>(); // store the book ids
             for (Book book : books) {
+                pStmt = conn.prepareStatement(exist_check_sql);
                 pStmt.setString(1, book.getCategory());
                 pStmt.setString(2, book.getTitle());
                 pStmt.setString(3, book.getPress());
                 pStmt.setInt(4, book.getPublishYear());
                 pStmt.setString(5, book.getAuthor());
-                ResultSet rs = pStmt.executeQuery(); // execute the check query
+                ResultSet rs = pStmt.executeQuery();
                 if (rs.next()) { // if the book to be stored already exists
                     rollback(conn); // rollback the transaction
                     return new ApiResult(false, "Book to be stored already exists");
                 }
-            }
 
-            String insert_sql = "INSERT INTO book (category, title, press, publish_year, author, price, stock) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)"; // insert the book
-            pStmt = conn.prepareStatement(insert_sql);
-            for (Book book : books) {
+                pStmt = conn.prepareStatement(insert_sql, Statement.RETURN_GENERATED_KEYS);
                 pStmt.setString(1, book.getCategory());
                 pStmt.setString(2, book.getTitle());
                 pStmt.setString(3, book.getPress());
@@ -127,15 +127,28 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 pStmt.setString(5, book.getAuthor());
                 pStmt.setDouble(6, book.getPrice());
                 pStmt.setInt(7, book.getStock());
-                pStmt.addBatch(); // add the batch
+                pStmt.executeUpdate();
+                rs = pStmt.getGeneratedKeys(); // get the generated keys, namely the book id
+                if (rs.next()) {
+                    int bookId = rs.getInt(1);
+                    bookIds.add(bookId);
+                } else { // if failed to get the book id
+                    rollback(conn); // rollback the transaction
+                    return new ApiResult(false, "Failed to get book id after storing a book");
+                }
             }
-            pStmt.executeBatch(); // execute the batch
+
+            for (int i = 0; i < books.size(); i++) {
+                books.get(i).setBookId(bookIds.get(i));
+            }
             commit(conn); // commit the transaction
             return new ApiResult(true, "Books stored successfully");
         } catch (SQLException e) {
             return new ApiResult(false, e.getMessage());
         }
     }
+
+
 
     @Override
     public ApiResult removeBook(int bookId) {
@@ -171,7 +184,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
         try {
             Connection conn = connector.getConn();
             String update_sql = "UPDATE book SET category = ?, title = ?, press = ?, publish_year = ?, " +
-                    "author = ?, price = ? WHERE book_id = ? AND stock = ?"; // update the book
+                    "author = ?, price = ? WHERE book_id = ?"; // update the book
             PreparedStatement pStmt = conn.prepareStatement(update_sql);
             pStmt.setString(1, book.getCategory());
             pStmt.setString(2, book.getTitle());
@@ -180,7 +193,6 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             pStmt.setString(5, book.getAuthor());
             pStmt.setDouble(6, book.getPrice());
             pStmt.setInt(7, book.getBookId());
-            pStmt.setInt(8, book.getStock());
             int affectedRows = pStmt.executeUpdate();
             if (affectedRows == 0) { // if failed to update the book
                 rollback(conn); // rollback the transaction
@@ -222,8 +234,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             if (conditions.getMaxPrice() != null) {
                 query_sql.append(" AND price <= ?"); // add the max price condition
             }
-            query_sql.append(" ORDER BY ").append(conditions.getSortBy().toString())
-                     .append(" ").append(conditions.getSortOrder().toString())
+            query_sql.append(" ORDER BY ").append(conditions.getSortBy().getValue())
+                     .append(" ").append(conditions.getSortOrder().getValue())
                     .append(", book_id ASC"); // sort the result
             PreparedStatement pStmt = conn.prepareStatement(query_sql.toString());
 
@@ -296,7 +308,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 return new ApiResult(false, "Book to be borrowed has not been returned");
             }
 
-            String stock_check_sql = "SELECT stock FROM book WHERE book_id = ?"; // check the stock of the book
+            String stock_check_sql = "SELECT stock FROM book WHERE book_id = ? FOR UPDATE"; // check the stock of the book
             pStmt = conn.prepareStatement(stock_check_sql);
             pStmt.setInt(1, borrow.getBookId());
             rs = pStmt.executeQuery();
@@ -311,15 +323,19 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 }
             }
 
-            String insert_sql = "INSERT INTO borrow (card_id, book_id, borrow_time, 0) VALUES (?, ?, ?)"; // insert the borrow record
+            String insert_sql = "INSERT INTO borrow (card_id, book_id, borrow_time, return_time) VALUES (?, ?, ?, 0)"; // insert the borrow record
             pStmt = conn.prepareStatement(insert_sql);
             pStmt.setInt(1, borrow.getCardId());
             pStmt.setInt(2, borrow.getBookId());
             pStmt.setLong(3, borrow.getBorrowTime());
             pStmt.executeUpdate();
-            incBookStock(borrow.getBookId(), -1); // decrease the stock of the book
 
-            commit(conn);
+            String update_sql = "UPDATE book SET stock = stock - 1 WHERE book_id = ? AND stock > 0"; // update the stock of the book
+            pStmt = conn.prepareStatement(update_sql);
+            pStmt.setInt(1, borrow.getBookId());
+            pStmt.executeUpdate();
+
+            commit(conn); // commit the transaction
             return new ApiResult(true, "Book borrowed successfully");
         } catch (SQLException e) {
             return new ApiResult(false, e.getMessage());
@@ -340,8 +356,8 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 rollback(conn); // rollback the transaction
                 return new ApiResult(false, "Book to be returned has not been borrowed");
             } else {
-                long borrowTime = rs.getLong(1);
-                if (borrowTime > borrow.getReturnTime()) { // if the return time is earlier than the borrow time
+                long borrowTime = rs.getLong("borrow_time");
+                if (borrowTime >= borrow.getReturnTime()) { // if the return time is earlier than the borrow time
                     rollback(conn); // rollback the transaction
                     return new ApiResult(false, "Return time is earlier than borrow time");
                 }
@@ -354,7 +370,11 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             pStmt.setInt(2, borrow.getCardId());
             pStmt.setInt(3, borrow.getBookId());
             pStmt.executeUpdate();
-            incBookStock(borrow.getBookId(), 1); // increase the stock of the book
+
+            String update_stock_sql = "UPDATE book SET stock = stock + 1 WHERE book_id = ?"; // update the stock of the book
+            pStmt = conn.prepareStatement(update_stock_sql);
+            pStmt.setInt(1, borrow.getBookId());
+            pStmt.executeUpdate();
 
             commit(conn);
             return new ApiResult(true, "Book returned successfully");
@@ -367,7 +387,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     public ApiResult showBorrowHistory(int cardId) {
         try {
             Connection conn = connector.getConn();
-            String query_sql = "SELECT * FROM borrow WHERE card_id = ? ORDER BY borrow_time DESC, book_id ASC"; // query the borrow history
+            String query_sql = "SELECT * FROM borrow NATURAL JOIN book WHERE card_id = ? ORDER BY borrow_time DESC, book_id ASC"; // query the borrow history
             PreparedStatement pStmt = conn.prepareStatement(query_sql);
             pStmt.setInt(1, cardId);
             ResultSet rs = pStmt.executeQuery();
@@ -378,6 +398,12 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                 BorrowHistories.Item item = new BorrowHistories.Item();
                 item.setCardId(rs.getInt("card_id"));
                 item.setBookId(rs.getInt("book_id"));
+                item.setCategory(rs.getString("category"));
+                item.setTitle(rs.getString("title"));
+                item.setPress(rs.getString("press"));
+                item.setPublishYear(rs.getInt("publish_year"));
+                item.setAuthor(rs.getString("author"));
+                item.setPrice(rs.getDouble("price"));
                 item.setBorrowTime(rs.getLong("borrow_time"));
                 item.setReturnTime(rs.getLong("return_time"));
                 items.add(item);
