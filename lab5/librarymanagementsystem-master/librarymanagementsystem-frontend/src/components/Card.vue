@@ -203,7 +203,7 @@ export default {
                     })
                 })
         }
-    },
+    }, 
     mounted() { // 当页面被渲染时
         this.QueryCards() // 查询借书证
     }
