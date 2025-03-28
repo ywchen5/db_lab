@@ -1,5 +1,6 @@
 import com.sun.net.httpserver.Headers;
 import entities.Card;
+import queries.ApiResult;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -23,6 +24,7 @@ import com.alibaba.fastjson2.JSONArray;
 public class Main {
 
     private static final Logger log = Logger.getLogger(Main.class.getName());
+    private static DatabaseConnector connector;
 
     public static void main(String[] args) {
         try {
@@ -30,7 +32,7 @@ public class Main {
             ConnectConfig conf = new ConnectConfig();
             log.info("Success to parse connect config. " + conf.toString());
             // connect to database
-            DatabaseConnector connector = new DatabaseConnector(conf);
+            connector = new DatabaseConnector(conf);
             boolean connStatus = connector.connect();
             if (!connStatus) {
                 log.severe("Failed to connect database.");
@@ -50,12 +52,22 @@ public class Main {
 
             // 标识一下，这样才知道我的后端启动了（确信
             System.out.println("Server is listening on port 8000");
-            // release database connection handler
-            if (connector.release()) {
-                log.info("Success to release connection.");
-            } else {
-                log.warning("Failed to release connection.");
-            }
+//            // release database connection handler
+//            if (connector.release()) {
+//                log.info("Success to release connection.");
+//            } else {
+//                log.warning("Failed to release connection.");
+//            }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (connector != null && connector.release()) {
+                    log.info("Database connection released.");
+                }
+                server.stop(0); // 停止服务器
+                log.info("Server shutdown complete.");
+            }));
+
+            Thread.currentThread().join();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -97,8 +109,19 @@ public class Main {
             OutputStream outputStream = exchange.getResponseBody();
             // 构建JSON响应数据，这里简化为字符串
             // 这里写的一个固定的JSON，实际可以查表获取数据，然后再拼出想要的JSON
-            String response = "[{\"cardId\": 1, \"name\": \"John Doe\", \"department\": \"Computer Science\", \"type\": \"Student\"}," +
-                    "{\"cardId\": 2, \"name\": \"Jane Smith\", \"department\": \"Electrical Engineering\", \"type\": \"Faculty\"}]";
+            String response = "";
+
+            LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
+            ApiResult result = library.showCards();
+            if (result.ok) {
+                JSONArray jsonArray = new JSONArray(result.payload);
+                JSONArray cards = jsonArray.getJSONObject(0).getJSONArray("cards");
+                response = cards.toString();
+                System.out.println(cards.toJSONString());
+            } else {
+                System.out.println(result.message);
+            }
+
             // 写
             outputStream.write(response.getBytes());
             // 流一定要close！！！小心泄漏
@@ -122,6 +145,32 @@ public class Main {
             // 看看读到了啥
             // 实际处理可能会更复杂点
             System.out.println("Received POST request to create card with data: " + requestBodyBuilder.toString());
+
+            LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
+
+            JSONObject jsonObject = JSON.parseObject(requestBodyBuilder.toString());
+
+            String action = jsonObject.getString("action");
+            if (action.equals("CreateCard")) {
+                Card card = new Card();
+                card.setName((String) jsonObject.get("name"));
+
+                Card.CardType type = null;
+                if (jsonObject.get("type").equals("学生")) {
+                    type = Card.CardType.values("S");
+                } else if (jsonObject.get("type").equals("教师")) {
+                    type = Card.CardType.values("T");
+                }
+                card.setType(type);
+
+                card.setDepartment((String) jsonObject.get("department"));
+                ApiResult result = library.registerCard(card);
+                if (result.ok) {
+                    System.out.println("Card created successfully");
+                } else {
+                    System.out.println(result.message);
+                }
+            }
 
             // 响应头
             exchange.getResponseHeaders().set("Content-Type", "text/plain");

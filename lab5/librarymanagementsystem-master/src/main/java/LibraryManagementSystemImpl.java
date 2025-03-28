@@ -431,6 +431,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             pStmt.setString(2, card.getDepartment());
             pStmt.setString(3, card.getType().getStr());
             ResultSet rs = pStmt.executeQuery();
+
             if (rs.next()) { // if the card to be registered already exists
                 rollback(conn); // rollback the transaction
                 return new ApiResult(false, "Card to be registered already exists");
