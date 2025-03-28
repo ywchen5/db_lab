@@ -117,7 +117,6 @@ public class Main {
                 JSONArray jsonArray = new JSONArray(result.payload);
                 JSONArray cards = jsonArray.getJSONObject(0).getJSONArray("cards");
                 response = cards.toString();
-                System.out.println(cards.toJSONString());
             } else {
                 System.out.println(result.message);
             }
@@ -154,19 +153,45 @@ public class Main {
             if (action.equals("CreateCard")) {
                 Card card = new Card();
                 card.setName((String) jsonObject.get("name"));
-
+                card.setDepartment((String) jsonObject.get("department"));
                 Card.CardType type = null;
-                if (jsonObject.get("type").equals("学生")) {
+                if (jsonObject.get("type").equals("Student")) {
                     type = Card.CardType.values("S");
-                } else if (jsonObject.get("type").equals("教师")) {
+                } else if (jsonObject.get("type").equals("Teacher")) {
                     type = Card.CardType.values("T");
                 }
                 card.setType(type);
 
-                card.setDepartment((String) jsonObject.get("department"));
                 ApiResult result = library.registerCard(card);
                 if (result.ok) {
                     System.out.println("Card created successfully");
+                } else {
+                    System.out.println(result.message);
+                }
+            } else if (action.equals("DeleteCard")) {
+                int cardId = jsonObject.getIntValue("cardId");
+                ApiResult result = library.removeCard(cardId);
+                if (result.ok) {
+                    System.out.println("Card deleted successfully");
+                } else {
+                    System.out.println(result.message);
+                }
+            } else if (action.equals("ModifyCard")) {
+                Card card = new Card();
+                card.setCardId(jsonObject.getIntValue("cardId"));
+                card.setName((String) jsonObject.get("name"));
+                card.setDepartment((String) jsonObject.get("department"));
+                Card.CardType type = null;
+                if (jsonObject.get("type").equals("Student")) {
+                    type = Card.CardType.values("S");
+                } else if (jsonObject.get("type").equals("Teacher")) {
+                    type = Card.CardType.values("T");
+                }
+                card.setType(type);
+
+                ApiResult result = library.modifyCard(card);
+                if (result.ok) {
+                    System.out.println("Card modified successfully");
                 } else {
                     System.out.println(result.message);
                 }

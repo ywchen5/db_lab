@@ -459,6 +459,29 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
     }
 
     @Override
+    public ApiResult modifyCard(Card card) {
+        try {
+            Connection conn = connector.getConn();
+            String update_sql = "UPDATE card SET name = ?, department = ?, type = ? WHERE card_id = ?"; // update the card
+            PreparedStatement pStmt = conn.prepareStatement(update_sql);
+            pStmt.setString(1, card.getName());
+            pStmt.setString(2, card.getDepartment());
+            pStmt.setString(3, card.getType().getStr());
+            pStmt.setInt(4, card.getCardId());
+            System.out.println(update_sql);
+            int affectedRows = pStmt.executeUpdate();
+            if (affectedRows == 0) { // if failed to update the card
+                rollback(conn); // rollback the transaction
+                return new ApiResult(false, "No such card to be updated");
+            }
+            commit(conn); // commit the transaction
+            return new ApiResult(true, "Card modified successfully");
+        } catch (SQLException e) {
+            return new ApiResult(false, e.getMessage());
+        }
+    }
+
+    @Override
     public ApiResult removeCard(int cardId) {
         try {
             Connection conn = connector.getConn();

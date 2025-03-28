@@ -156,6 +156,10 @@ public interface LibraryManagementSystem {
      *
      * @param cardId card to be removed
      */
+
+    // This is a new method I add
+    ApiResult modifyCard(Card card);
+
     ApiResult removeCard(int cardId);
 
     /**
