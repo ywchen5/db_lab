@@ -5,7 +5,10 @@ import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import com.sun.net.httpserver.HttpServer;
@@ -46,6 +49,7 @@ public class Main {
             // 添加handler，这里就绑定到/card路由
             // 所以localhost:8000/card是会有handler来处理
             server.createContext("/card", new CardHandler());
+            server.createContext("/borrow", new BorrowHandler());
 
             // 启动服务器
             server.start();
@@ -114,6 +118,7 @@ public class Main {
             LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
             ApiResult result = library.showCards();
             if (result.ok) {
+                // [{"cards":[{"cardId":1,"department":"Architecture","name":"User00000","type":"Teacher"}]}]
                 JSONArray jsonArray = new JSONArray(result.payload);
                 JSONArray cards = jsonArray.getJSONObject(0).getJSONArray("cards");
                 response = cards.toString();
@@ -205,6 +210,83 @@ public class Main {
             // 剩下三个和GET一样
             OutputStream outputStream = exchange.getResponseBody();
             outputStream.write("Card created successfully".getBytes());
+            outputStream.close();
+        }
+
+        private void handleOptionsRequest(HttpExchange exchange) throws IOException {
+            // OPTIONS请求直接返回204 No Content
+            exchange.sendResponseHeaders(204, -1);
+        }
+    }
+
+    static class BorrowHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            // 允许所有域的请求，cors处理
+            Headers headers = exchange.getResponseHeaders();
+            headers.add("Access-Control-Allow-Origin", "*");
+            headers.add("Access-Control-Allow-Methods", "GET, OPTIONS");
+            headers.add("Access-Control-Allow-Headers", "Content-Type");
+            // 解析请求的方法，看GET还是POST
+            String requestMethod = exchange.getRequestMethod();
+            // 注意判断要用equals方法而不是==啊，java的小坑（
+            if (requestMethod.equals("GET")) {
+                // 处理GET
+                handleGetRequest(exchange);
+            }  else if (requestMethod.equals("OPTIONS")) {
+                // 处理OPTIONS
+                handleOptionsRequest(exchange);
+            } else {
+                // 其他请求返回405 Method Not Allowed
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+
+        private static Map<String, String> parseQueryParams(String query) {
+            Map<String, String> queryParams = new HashMap<>();
+            if (query != null) {
+                String[] pairs = query.split("&");
+                for (String pair : pairs) {
+                    String[] keyValue = pair.split("=");
+                    if (keyValue.length == 2) {
+                        String key = keyValue[0];
+                        String value = keyValue[1];
+                        queryParams.put(key, value);
+                    }
+                }
+            }
+            return queryParams;
+        }
+
+        private void handleGetRequest(HttpExchange exchange) throws IOException {
+            String query = exchange.getRequestURI().getQuery();
+            System.out.println("Received GET request for borrowHistory with query: " + query);
+
+            Map<String, String> params = parseQueryParams(query);
+
+            int cardId = Integer.parseInt(params.get("cardId"));
+
+            LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
+            ApiResult result = library.showBorrowHistory(cardId);
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, 0);
+            OutputStream outputStream = exchange.getResponseBody();
+            String response = "";
+
+            if (result.ok) {
+                // [{"count":1,"items":[{"author":"Yuuku","bookId":1,"borrowTime":1743091450180,"cardId":1,"category":"Nature",
+                // "press":"Press-C","price":198.46,"publishYear":2000,"returnTime":0,"title":"Le Petit Prince"}]}]
+                JSONArray jsonArray = new JSONArray(result.payload);
+                JSONArray borrowHistory = jsonArray.getJSONObject(0).getJSONArray("items");
+                response = borrowHistory.toString();
+            } else {
+                System.out.println(result.message);
+            }
+
+            // 写
+            outputStream.write(response.getBytes());
+            // 流一定要close！！！小心泄漏
             outputStream.close();
         }
 

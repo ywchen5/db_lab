@@ -468,7 +468,6 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
             pStmt.setString(2, card.getDepartment());
             pStmt.setString(3, card.getType().getStr());
             pStmt.setInt(4, card.getCardId());
-            System.out.println(update_sql);
             int affectedRows = pStmt.executeUpdate();
             if (affectedRows == 0) { // if failed to update the card
                 rollback(conn); // rollback the transaction
