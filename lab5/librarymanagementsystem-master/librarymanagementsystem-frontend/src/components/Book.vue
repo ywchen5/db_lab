@@ -37,7 +37,9 @@
             <el-divider />
 
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
-                <el-button type="primary" @click="QueryBookVisible = true" style="width: 120px;">查询图书</el-button>
+                <el-button type="primary" @click="toQueryBook.toQueryCategory = '', toQueryBook.toQueryTitle = '', toQueryBook.toQueryPress = '',
+                toQueryBook.toQueryAuthor = '', toQueryBook.toQueryMinPublishYear = '', toQueryBook.toQueryMaxPublishYear = '',
+                toQueryBook.toQueryMinPrice = '', toQueryBook.toQueryMaxPrice = '', QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
             </div>
         </div>
 
@@ -128,41 +130,65 @@
 
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书类别：
-                <el-input v-model="toQueryBook" style="width: 15vw;" clearable />
+                <el-input v-model="toQueryBook.toQueryCategory" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书名称：
-                <el-input v-model="toQueryBook" style="width: 15vw;" clearable />
+                <el-input v-model="toQueryBook.toQueryTitle" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书出版社：
-                <el-input v-model="toQueryBook" style="width: 14vw;" clearable />
+                <el-input v-model="toQueryBook.toQueryPress" style="width: 14vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书年份：
                 <span>
-                    <el-input v-model="toQueryBook" style="width: 7vw;" clearable />
+                  <el-input v-model="toQueryBook.toQueryMinPublishYear" style="width: 7vw;" clearable />
                     -
-                    <el-input v-model="toQueryBook" style="width: 7vw;" clearable />
+                    <el-input v-model="toQueryBook.toQueryMaxPublishYear" style="width: 7vw;" clearable />
                 </span>
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
               图书作者：
-              <el-input v-model="toQueryBook" style="width: 15vw;" clearable />
+              <el-input v-model="toQueryBook.toQueryAuthor" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书价格：
                 <span>
-                    <el-input v-model="toQueryBook" style="width: 7vw;" clearable />
+                    <el-input v-model="toQueryBook.toQueryMinPrice" style="width: 7vw;" clearable />
                     -
-                    <el-input v-model="toQueryBook" style="width: 7vw;" clearable />
+                    <el-input v-model="toQueryBook.toQueryMaxPrice" style="width: 7vw;" clearable />
                 </span>
             </div>
             <template #footer>
                 <span>
                     <el-button @click="QueryBookVisible = false">取消</el-button>
-                    <el-button type="primary" @click="ConfirmQueryBook"
-                               :disabled="toQueryBook.length === 0">确定</el-button>
+                    <el-button type="primary" @click="ConfirmQueryBook">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <! -- 查询结果对话框 -->
+        <el-dialog v-model="QueryResultVisible" width="60%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >查询结果</span>
+            </template>
+
+            <el-table :data="tableData" height="600"
+                      :default-sort="{ prop: 'bookId', order: 'ascending' }" :table-layout="'auto'"
+                      style="width: 90%; margin-left: 50px; margin-top: 30px; margin-right: 50px; max-width: 80vw;">
+                <el-table-column prop="bookId" label="图书ID" />
+                <el-table-column prop="category" label="图书类别" />
+                <el-table-column prop="title" label="图书名称" />
+                <el-table-column prop="press" label="图书出版社" />
+                <el-table-column prop="publishYear" label="图书年份" />
+                <el-table-column prop="author" label="图书作者" />
+                <el-table-column prop="price" label="图书价格" />
+                <el-table-column prop="stock" label="图书库存" />
+            </el-table>
+            <template #footer>
+                <span>
+                    <el-button @click="QueryResultVisible = false">关闭</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -185,6 +211,17 @@ export default {
             Edit,
             Search,
             toSearch: '', // 搜索内容
+            tableData: [{ // 列表项
+                bookId: 1,
+                category: '计算机',
+                title: '数据库系统',
+                press: '浙江大学出版社',
+                publishYear: 2020,
+                author: 'sjl',
+                price: 99.9,
+                stock: 10
+            }],
+
             AddBookVisible: false, // 添加图书对话框
             AddBatchVisible: false, // 批量添加图书对话框
             ModifyBookVisible: false, // 修改图书对话框
@@ -192,14 +229,23 @@ export default {
             BorrowBookVisible: false, // 借阅图书对话框
             ReturnBookVisible: false, // 归还图书对话框
             QueryBookVisible: false, // 查询图书对话框
+            QueryResultVisible: false, // 查询结果对话框
             toAddBook: '', // 添加图书内容
             toAddBatch: '', // 批量添加图书内容
             toModifyBook: '', // 修改图书内容
             toDeleteBook: '', // 删除图书内容
             toBorrowBook: '', // 借阅图书内容
             toReturnBook: '', // 归还图书内容
-            toQueryBook: '', // 查询图书内容
-
+            toQueryBook: {
+                toQueryCategory: '',
+                toQueryTitle: '',
+                toQueryPress: '',
+                toQueryAuthor: '',
+                toQueryMinPublishYear: '',
+                toQueryMaxPublishYear: '',
+                toQueryMinPrice: '',
+                toQueryMaxPrice: ''
+            } // 查询图书内容
         }
     },
     methods: {
@@ -207,7 +253,28 @@ export default {
         },
         ConfirmAddBatch(){},
 
-        ConfirmQueryBook() {}
+        async ConfirmQueryBook() {
+            this.tableData = [] // 清空列表
+            let response = await axios.get('/book',
+            { params: {
+                      category: this.toQueryBook.toQueryCategory || undefined,
+                      title: this.toQueryBook.toQueryTitle || undefined,
+                      press: this.toQueryBook.toQueryPress || undefined,
+                      author: this.toQueryBook.toQueryAuthor || undefined,
+                      minPublishYear: this.toQueryBook.toQueryMinPublishYear || undefined,
+                      maxPublishYear: this.toQueryBook.toQueryMaxPublishYear || undefined,
+                      minPrice: this.toQueryBook.toQueryMinPrice || undefined,
+                      maxPrice: this.toQueryBook.toQueryMaxPrice || undefined
+                    }
+                })
+            let books = response.data // 获取响应负载
+            books.forEach(book => { // 对于每一本书
+                this.tableData.push(book) // 将它加入到列表项中
+            });
+            ElMessage.success("图书查询成功") // 显示消息提醒
+            this.QueryBookVisible = false // 将对话框设置为不可见
+            this.QueryResultVisible = true // 显示查询结果对话框
+        }
     }
 }
 
@@ -226,7 +293,7 @@ export default {
     padding-top: 15px;
 }
 
-.newBookBox {
+.dialogBox {
     height: 300px;
     width: 200px;
     margin-top: 40px;

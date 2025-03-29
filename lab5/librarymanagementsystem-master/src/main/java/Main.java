@@ -1,6 +1,7 @@
 import com.sun.net.httpserver.Headers;
 import entities.Card;
 import queries.ApiResult;
+import queries.BookQueryConditions;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
@@ -9,6 +10,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Condition;
 import java.util.logging.Logger;
 
 import com.sun.net.httpserver.HttpServer;
@@ -50,6 +52,7 @@ public class Main {
             // 所以localhost:8000/card是会有handler来处理
             server.createContext("/card", new CardHandler());
             server.createContext("/borrow", new BorrowHandler());
+            server.createContext("/book", new BookHandler());
 
             // 启动服务器
             server.start();
@@ -290,6 +293,116 @@ public class Main {
             outputStream.close();
         }
 
+        private void handleOptionsRequest(HttpExchange exchange) throws IOException {
+            // OPTIONS请求直接返回204 No Content
+            exchange.sendResponseHeaders(204, -1);
+        }
+    }
+
+    static class BookHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            // 允许所有域的请求，cors处理
+            Headers headers = exchange.getResponseHeaders();
+            headers.add("Access-Control-Allow-Origin", "*");
+            headers.add("Access-Control-Allow-Methods", "GET, OPTIONS");
+            headers.add("Access-Control-Allow-Headers", "Content-Type");
+            // 解析请求的方法，看GET还是POST
+            String requestMethod = exchange.getRequestMethod();
+            // 注意判断要用equals方法而不是==啊，java的小坑（
+            if (requestMethod.equals("GET")) {
+                // 处理GET
+                handleGetRequest(exchange);
+            }  else if (requestMethod.equals("POST")) {
+                // 处理POST
+                handlePostRequest(exchange);
+            } else if (requestMethod.equals("OPTIONS")) {
+                // 处理OPTIONS
+                handleOptionsRequest(exchange);
+            } else {
+                // 其他请求返回405 Method Not Allowed
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+
+        private static Map<String, String> parseQueryParams(String query) {
+            Map<String, String> queryParams = new HashMap<>();
+            if (query != null) {
+                String[] pairs = query.split("&");
+                for (String pair : pairs) {
+                    String[] keyValue = pair.split("=");
+                    if (keyValue.length == 2) {
+                        String key = keyValue[0];
+                        String value = keyValue[1];
+                        queryParams.put(key, value);
+                    }
+                }
+            }
+            return queryParams;
+        }
+
+        private void handleGetRequest(HttpExchange exchange) throws IOException {
+            String query = exchange.getRequestURI().getQuery();
+            System.out.println("Received GET request for borrowHistory with query: " + query);
+
+            BookQueryConditions conditions = new BookQueryConditions();
+
+            Map<String, String> params = parseQueryParams(query);
+            String Category = params.get("category");
+            String Title = params.get("title");
+            String Author = params.get("author");
+            String Press = params.get("press");
+            if (params.get("minPublishYear") != null) {
+                int MinPublishYear = Integer.parseInt(params.get("minPublishYear"));
+                conditions.setMinPublishYear(MinPublishYear);
+            }
+            if (params.get("maxPublishYear") != null) {
+                int MaxPublishYear = Integer.parseInt(params.get("maxPublishYear"));
+                conditions.setMaxPublishYear(MaxPublishYear);
+            }
+            if (params.get("minPrice") != null) {
+                double MinPrice = Double.parseDouble(params.get("minPrice"));
+                conditions.setMinPrice(MinPrice);
+            }
+            if (params.get("maxPrice") != null) {
+                double MaxPrice = Double.parseDouble(params.get("maxPrice"));
+                conditions.setMaxPrice(MaxPrice);
+            }
+
+            conditions.setCategory(Category);
+            conditions.setTitle(Title);
+            conditions.setPress(Press);
+            conditions.setAuthor(Author);
+
+            // 响应头，因为是JSON通信
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            // 状态码为200，也就是status ok
+            exchange.sendResponseHeaders(200, 0);
+            // 获取输出流，java用流对象来进行io操作
+            OutputStream outputStream = exchange.getResponseBody();
+            // 构建JSON响应数据，这里简化为字符串
+            // 这里写的一个固定的JSON，实际可以查表获取数据，然后再拼出想要的JSON
+            String response = "";
+
+            LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
+            ApiResult result = library.queryBook(conditions);
+            if (result.ok) {
+                // [{"count":1,"results":[{"author":"Yuuku","bookId":1,"category":"Nature","press":"Press-C","price":198.46,"publishYear":2000,"stock":0,"title":"Le Petit Prince"}]}]
+                JSONArray jsonArray = new JSONArray(result.payload);
+                System.out.println(jsonArray.toString());
+                JSONArray books = jsonArray.getJSONObject(0).getJSONArray("results");
+                response = books.toString();
+            } else {
+                System.out.println(result.message);
+            }
+
+            // 写
+            outputStream.write(response.getBytes());
+            // 流一定要close！！！小心泄漏
+            outputStream.close();
+        }
+
+        private void handlePostRequest(HttpExchange exchange) throws IOException {}
         private void handleOptionsRequest(HttpExchange exchange) throws IOException {
             // OPTIONS请求直接返回204 No Content
             exchange.sendResponseHeaders(204, -1);
