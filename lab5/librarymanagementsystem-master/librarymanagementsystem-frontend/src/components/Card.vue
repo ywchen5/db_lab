@@ -183,9 +183,12 @@ export default {
                     type: this.newCardInfo.type
                 })
                 .then(response => {
-                    ElMessage.success("借书证新建成功") // 显示消息提醒
+                    ElMessage.success(response.data)
                     this.newCardVisible = false // 将对话框设置为不可见
                     this.QueryCards() // 重新查询借书证以刷新页面
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
                 })
         },
         ConfirmModifyCard() {
@@ -198,9 +201,12 @@ export default {
                 type: this.toModifyInfo.type
               })
               .then(response => {
-                ElMessage.success("借书证修改成功") // 显示消息提醒
-                this.modifyCardVisible = false
-                this.QueryCards() // 重新查询借书证以刷新页面
+                  ElMessage.success(response.data)
+                  this.modifyCardVisible = false // 将对话框设置为不可见
+                  this.QueryCards() // 重新查询借书证以刷新页面
+              })
+              .catch(error => {
+                  ElMessage.error(error.response.data) // 显示错误消息
               })
         },
         ConfirmRemoveCard() {
@@ -210,9 +216,12 @@ export default {
                 cardId: this.toRemove
               })
               .then(response => {
-                ElMessage.success("借书证删除成功") // 显示消息提醒
-                this.removeCardVisible = false
-                this.QueryCards() // 重新查询借书证以刷新页面
+                  ElMessage.success(response.data)
+                  this.removeCardVisible = false // 将对话框设置为不可见
+                  this.QueryCards() // 重新查询借书证以刷新页面
+              })
+              .catch(error => {
+                  ElMessage.error(error.response.data) // 显示错误消息
               })
         },
         QueryCards() {

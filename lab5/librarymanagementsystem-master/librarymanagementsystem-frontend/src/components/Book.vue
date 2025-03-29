@@ -14,7 +14,8 @@
                 <el-button type="primary" @click="this.AddBookVisible = true, toAddBook.toAddCategory = '', toAddBook.toAddTitle = '',
                 toAddBook.toAddPress = '', toAddBook.toAddPublishYear = '', toAddBook.toAddAuthor = '',
                 toAddBook.toAddPrice = '', toAddBook.toAddStock = ''" style="width: 120px; margin-right: 40px;">图书入库</el-button>
-                <el-button type="primary" @click="toQueryBook" style="width: 120px; margin-right: 40px;">增加库存</el-button>
+                <el-button type="primary" @click="this.ModifyStockVisible = true, toModifyStock.toModifyStockbookId = '',
+                toModifyStock.toModifyStockNum = ''" style="width: 120px; margin-right: 40px;">修改库存</el-button>
                 <el-button type="primary" @click="toModifyBook" style="width: 120px; margin-right: 40px;">修改图书信息</el-button>
                 <el-button type="primary" @click="toDeleteBook" style="width: 120px;">删除图书</el-button>
             </div>`
@@ -121,8 +122,30 @@
             </template>
         </el-dialog>
 
+        <!-- 修改库存对话框 -->
+        <el-dialog v-model="ModifyStockVisible" width="30%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >修改库存</span>
+            </template>
 
+            <el-divider />
 
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书ID：
+                <el-input v-model="toModifyStock.toModifyStockbookId" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                增加/减少数量：
+                <el-input v-model="toModifyStock.toModifyStockNum" style="width: 15vw;" clearable />
+            </div>
+            <template #footer>
+                <span>
+                    <el-button @click="ModifyStockVisible = false">取消</el-button>
+                    <el-button type="primary" @click="ConfirmModifyBook"
+                               :disabled="toModifyStock.toModifyStockbookId.length === 0 || toModifyStock.toModifyStockNum.length === 0">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
 
 
         <! -- 查询对话框 -->
@@ -229,6 +252,7 @@ export default {
 
             AddBookVisible: false, // 添加图书对话框
             AddBatchVisible: false, // 批量添加图书对话框
+            ModifyStockVisible: false, // 修改库存对话框
             ModifyBookVisible: false, // 修改图书对话框
             DeleteBookVisible: false, // 删除图书对话框
             BorrowBookVisible: false, // 借阅图书对话框
@@ -245,6 +269,10 @@ export default {
                 toAddStock: ''
             }, // 待添加图书信息
             toAddBatch: '', // 批量添加图书内容
+            toModifyStock: {
+                toModifyStockbookId: '',
+                toModifyStockNum: ''
+            }, // 修改图书库存内容
             toModifyBook: '', // 修改图书内容
             toDeleteBook: '', // 删除图书内容
             toBorrowBook: '', // 借阅图书内容
@@ -275,11 +303,30 @@ export default {
                     stock: this.toAddBook.toAddStock
                 })
                 .then(response => {
-                    ElMessage.success("图书入库成功") // 显示消息提醒
+                    ElMessage.success(response.data)
                     this.AddBookVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
                 })
         },
         ConfirmAddBatch(){},
+
+        ConfirmModifyBook() {
+            axios.post("/book",
+                {
+                    action: "ModifyStock",
+                    bookId: this.toModifyStock.toModifyStockbookId,
+                    deltaStock: this.toModifyStock.toModifyStockNum
+                })
+                .then(response => {
+                    ElMessage.success(response.data)
+                    this.ModifyStockVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
+                })
+        },
 
         async ConfirmQueryBook() {
             this.tableData = [] // 清空列表
@@ -299,7 +346,7 @@ export default {
             books.forEach(book => { // 对于每一本书
                 this.tableData.push(book) // 将它加入到列表项中
             });
-            ElMessage.success("图书查询成功") // 显示消息提醒
+            ElMessage.success("Book Query Success!") // 显示成功消息
             this.QueryBookVisible = false // 将对话框设置为不可见
             this.QueryResultVisible = true // 显示查询结果对话框
         }

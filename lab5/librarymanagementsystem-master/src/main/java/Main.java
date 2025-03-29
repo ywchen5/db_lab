@@ -154,10 +154,13 @@ public class Main {
             // 实际处理可能会更复杂点
             System.out.println("Received POST request to create card with data: " + requestBodyBuilder.toString());
 
+            // 响应头
+            exchange.getResponseHeaders().set("Content-Type", "text/plain");
+            String response = "";
+
             LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
 
             JSONObject jsonObject = JSON.parseObject(requestBodyBuilder.toString());
-
             String action = jsonObject.getString("action");
             if (action.equals("CreateCard")) {
                 Card card = new Card();
@@ -174,16 +177,24 @@ public class Main {
                 ApiResult result = library.registerCard(card);
                 if (result.ok) {
                     System.out.println("Card created successfully");
+                    response = "Card created successfully";
+                    exchange.sendResponseHeaders(200, 0);
                 } else {
                     System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, -1);
                 }
             } else if (action.equals("DeleteCard")) {
                 int cardId = jsonObject.getIntValue("cardId");
                 ApiResult result = library.removeCard(cardId);
                 if (result.ok) {
                     System.out.println("Card deleted successfully");
+                    response = "Card deleted successfully";
+                    exchange.sendResponseHeaders(200, 0);
                 } else {
                     System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, -1);
                 }
             } else if (action.equals("ModifyCard")) {
                 Card card = new Card();
@@ -201,18 +212,17 @@ public class Main {
                 ApiResult result = library.modifyCard(card);
                 if (result.ok) {
                     System.out.println("Card modified successfully");
+                    response = "Card modified successfully";
+                    exchange.sendResponseHeaders(200, 0);
                 } else {
                     System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, -1);
                 }
             }
 
-            // 响应头
-            exchange.getResponseHeaders().set("Content-Type", "text/plain");
-            // 响应状态码200
-            exchange.sendResponseHeaders(200, 0);
-
-            // 剩下三个和GET一样
             OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write(response.getBytes());
             outputStream.close();
         }
 
@@ -411,6 +421,9 @@ public class Main {
             }
             System.out.println("Received POST request to create book with data: " + requestBodyBuilder.toString());
 
+            exchange.getResponseHeaders().set("Content-Type", "text/plain");
+            String response = "";
+
             LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
             JSONObject jsonObject = JSON.parseObject(requestBodyBuilder.toString());
             String action = jsonObject.getString("action");
@@ -427,15 +440,33 @@ public class Main {
                 ApiResult result = library.storeBook(book);
                 if (result.ok) {
                     System.out.println("Book created successfully");
+                    response = "Book created successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
                 } else {
                     System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
                 }
+            } else if (action.equals("AddBatch")) {
 
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, 0);
-                OutputStream outputStream = exchange.getResponseBody();
-                outputStream.close();
+            } else if (action.equals("ModifyStock")) {
+                int bookId = jsonObject.getIntValue("bookId");
+                int deltaStock = jsonObject.getIntValue("deltaStock");
+                ApiResult result = library.incBookStock(bookId, deltaStock);
+                if (result.ok) {
+                    System.out.println("Book stock modified successfully");
+                    response = "Book stock modified successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                } else {
+                    System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
+                }
             }
+
+            OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write(response.getBytes());
+            outputStream.close();
         }
         private void handleOptionsRequest(HttpExchange exchange) throws IOException {
             // OPTIONS请求直接返回204 No Content
