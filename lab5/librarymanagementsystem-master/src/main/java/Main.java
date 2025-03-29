@@ -449,7 +449,43 @@ public class Main {
                     exchange.sendResponseHeaders(405, response.getBytes().length);
                 }
             } else if (action.equals("AddBatch")) {
+                // D:\study\year2sem2\dbs\db_lab\lab5\librarymanagementsystem-master\src\test\BookBatch.json
+                String filePath = (String) jsonObject.get("path");
+                File file = new File(filePath);
+                if (!file.exists()) {
+                    System.out.println("File not found: " + filePath);
+                    response = "File not found";
+                    exchange.sendResponseHeaders(404, response.getBytes().length);
+                } else {
+                    String jsonString = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+                    JSONArray jsonArray = JSON.parseArray(jsonString);
+                    JSONArray books = jsonArray.getJSONObject(0).getJSONArray("books");
 
+                    ArrayList<Book> bookList = new ArrayList<>();
+                    for (int i = 0; i < books.size(); i++) {
+                        Book book = new Book();
+                        JSONObject bookJson = books.getJSONObject(i);
+                        book.setTitle(bookJson.getString("title"));
+                        book.setCategory(bookJson.getString("category"));
+                        book.setPress(bookJson.getString("press"));
+                        book.setAuthor(bookJson.getString("author"));
+                        book.setPublishYear(bookJson.getIntValue("publishYear"));
+                        book.setPrice(bookJson.getDoubleValue("price"));
+                        book.setStock(bookJson.getIntValue("stock"));
+                        bookList.add(book);
+                    }
+                    ApiResult result = library.storeBook(bookList);
+
+                    if (result.ok) {
+                        System.out.println("Books created successfully");
+                        response = "Books created successfully";
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                    } else {
+                        System.out.println(result.message);
+                        response = result.message;
+                        exchange.sendResponseHeaders(405, response.getBytes().length);
+                    }
+                }
             } else if (action.equals("ModifyStock")) {
                 int bookId = jsonObject.getIntValue("bookId");
                 int deltaStock = jsonObject.getIntValue("deltaStock");

@@ -1,0 +1,51 @@
+[
+  {
+    "books": [
+      {
+        "category": "Fiction",
+        "title": "The Great Adventure",
+        "press": "Adventure Press",
+        "publishYear": 2021,
+        "author": "John Doe",
+        "price": 29.99,
+        "stock": 2
+      },
+      {
+          "category": "Science",
+          "title": "The Science of Everything",
+          "press": "Science Press",
+          "publishYear": 2020,
+          "author": "Jane Smith",
+          "price": 39.99,
+          "stock": 3
+          },
+          {
+          "category": "History",
+          "title": "A Brief History of Time",
+          "press": "History Press",
+          "publishYear": 2018,
+          "author": "Stephen Hawking",
+          "price": 19.99,
+          "stock": 0
+          },
+          {
+          "category": "Fiction",
+          "title": "The Mystery of the Missing Book",
+          "press": "Mystery Press",
+          "publishYear": 2019,
+          "author": "Agatha Christie",
+          "price": 15.99,
+          "stock": 1
+          },
+          {
+          "category": "Science Fiction",
+          "title": "Dune",
+          "press": "Sci-Fi Press",
+          "publishYear": 2022,
+          "author": "Frank Herbert",
+          "price": 25.99,
+          "stock": 1
+      }
+    ]
+  }
+]

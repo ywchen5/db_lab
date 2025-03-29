@@ -12,8 +12,8 @@
 
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
                 <el-button type="primary" @click="this.AddBookVisible = true, toAddBook.toAddCategory = '', toAddBook.toAddTitle = '',
-                toAddBook.toAddPress = '', toAddBook.toAddPublishYear = '', toAddBook.toAddAuthor = '',
-                toAddBook.toAddPrice = '', toAddBook.toAddStock = ''" style="width: 120px; margin-right: 40px;">图书入库</el-button>
+                toAddBook.toAddPress = '', toAddBook.toAddPublishYear = '', toAddBook.toAddAuthor = '',toAddBook.toAddPrice = '',
+                toAddBook.toAddStock = '', toAddBatch.path = ''" style="width: 120px; margin-right: 40px;">图书入库</el-button>
 
                 <el-button type="primary" @click="this.ModifyStockVisible = true, toModifyStock.toModifyStockbookId = '',
                 toModifyStock.toModifyStockNum = ''" style="width: 120px; margin-right: 40px;">修改库存</el-button>
@@ -118,11 +118,18 @@
                 批量添加
             </span>
 
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                批量入库json文件路径：
+                <el-input v-model="toAddBatch.path" style="width: 24vw;" clearable />
+            </div>
+
             <template #footer>
                 <span>
                     <el-button @click="AddBatchVisible = false">取消</el-button>
                     <el-button type="primary" @click="ConfirmAddBatch"
-                               :disabled="toAddBook.length === 0">确定</el-button>
+                               :disabled="toAddBatch.path.length === 0">确定</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -392,7 +399,9 @@ export default {
                 toAddPrice: '',
                 toAddStock: ''
             }, // 待添加图书信息
-            toAddBatch: '', // 批量添加图书内容
+            toAddBatch: {
+                path: ''
+            }, // 批量添加图书信息
             toModifyStock: {
                 toModifyStockbookId: '',
                 toModifyStockNum: ''
@@ -452,8 +461,20 @@ export default {
                     ElMessage.error(error.response.data) // 显示错误消息
                 })
         },
-        ConfirmAddBatch(){},
-
+        ConfirmAddBatch(){
+            axios.post("/book",
+                {
+                  action: "AddBatch",
+                  path: this.toAddBatch.path
+              })
+              .then(response => {
+                  ElMessage.success(response.data)
+                  this.AddBatchVisible = false // 将对话框设置为不可见
+              })
+              .catch(error => {
+                  ElMessage.error(error.response.data) // 显示错误消息
+              })
+        },
         ConfirmModifyStock() {
             axios.post("/book",
                 {
