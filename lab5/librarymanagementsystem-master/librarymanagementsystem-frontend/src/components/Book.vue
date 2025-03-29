@@ -46,8 +46,9 @@
 
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
                 <el-button type="primary" @click="toQueryBook.toQueryCategory = '', toQueryBook.toQueryTitle = '', toQueryBook.toQueryPress = '',
-                toQueryBook.toQueryAuthor = '', toQueryBook.toQueryMinPublishYear = '', toQueryBook.toQueryMaxPublishYear = '',
-                toQueryBook.toQueryMinPrice = '', toQueryBook.toQueryMaxPrice = '', this.QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
+                toQueryBook.toQueryAuthor = '', toQueryBook.toQueryMinPublishYear = '', toQueryBook.toQueryMaxPublishYear = '', toQueryBook.toQueryMinPrice = '',
+                toQueryBook.toQueryMaxPrice = '', toQueryBook.SortBy = '', toQueryBook.SortOrder = 'ASC', this.QueryResultVisible = false,
+                this.QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
             </div>
         </div>
 
@@ -319,6 +320,20 @@
                     <el-input v-model="toQueryBook.toQueryMaxPrice" style="width: 7vw;" clearable />
                 </span>
             </div>
+
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                排序依据(英文小写)：
+                <el-input v-model="toQueryBook.SortBy" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                排序方式：
+                <el-select v-model="toQueryBook.SortOrder" style="width: 15vw;" placeholder="请选择">
+                    <el-option v-for="type in types" :key="type.value" :label="type.label" :value="type.value" />
+                </el-select>
+            </div>
+
             <template #footer>
                 <span>
                     <el-button @click="QueryBookVisible = false">取消</el-button>
@@ -334,7 +349,7 @@
             </template>
 
             <el-table :data="tableData" height="600"
-                      :default-sort="{ prop: 'bookId', order: 'ascending' }" :table-layout="'auto'"
+                      :table-layout="'auto'"
                       style="width: 90%; margin-left: 50px; margin-top: 30px; margin-right: 50px; max-width: 80vw;">
                 <el-table-column prop="bookId" label="图书ID" />
                 <el-table-column prop="category" label="图书类别" />
@@ -380,6 +395,17 @@ export default {
                 price: 99.9,
                 stock: 10
             }],
+            types: [
+                {
+                    value: 'ASC',
+                    label: '升序'
+                }
+                ,
+                {
+                    value: 'DESC',
+                    label: '降序'
+                }
+            ],
 
             AddBookVisible: false, // 添加图书对话框
             AddBatchVisible: false, // 批量添加图书对话框
@@ -436,7 +462,9 @@ export default {
                 toQueryMinPublishYear: '',
                 toQueryMaxPublishYear: '',
                 toQueryMinPrice: '',
-                toQueryMaxPrice: ''
+                toQueryMaxPrice: '',
+                SortBy: '',
+                SortOrder: 'ASC'
             } // 查询图书内容
         }
     },
@@ -569,7 +597,9 @@ export default {
                       minPublishYear: this.toQueryBook.toQueryMinPublishYear || undefined,
                       maxPublishYear: this.toQueryBook.toQueryMaxPublishYear || undefined,
                       minPrice: this.toQueryBook.toQueryMinPrice || undefined,
-                      maxPrice: this.toQueryBook.toQueryMaxPrice || undefined
+                      maxPrice: this.toQueryBook.toQueryMaxPrice || undefined,
+                      sortBy: this.toQueryBook.SortBy || undefined,
+                      sortOrder: this.toQueryBook.SortOrder || undefined
                     }
                 })
             let books = response.data // 获取响应负载

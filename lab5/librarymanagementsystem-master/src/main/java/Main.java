@@ -4,12 +4,14 @@ import entities.Borrow;
 import entities.Card;
 import queries.ApiResult;
 import queries.BookQueryConditions;
+import queries.SortOrder;
 import utils.ConnectConfig;
 import utils.DatabaseConnector;
 
 import java.io.*;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
@@ -378,6 +380,33 @@ public class Main {
             if (params.get("maxPrice") != null) {
                 double MaxPrice = Double.parseDouble(params.get("maxPrice"));
                 conditions.setMaxPrice(MaxPrice);
+            }
+            if (params.get("sortBy") != null) {
+                String sortBy = params.get("sortBy");
+                if (sortBy.equals("category")) {
+                    conditions.setSortBy(Book.SortColumn.CATEGORY);
+                } else if (sortBy.equals("title")) {
+                    conditions.setSortBy(Book.SortColumn.TITLE);
+                } else if (sortBy.equals("author")) {
+                    conditions.setSortBy(Book.SortColumn.AUTHOR);
+                } else if (sortBy.equals("press")) {
+                    conditions.setSortBy(Book.SortColumn.PRESS);
+                } else if (sortBy.equals("publishyear")) {
+                    conditions.setSortBy(Book.SortColumn.PUBLISH_YEAR);
+                } else if (sortBy.equals("price")) {
+                    conditions.setSortBy(Book.SortColumn.PRICE);
+                } else if (sortBy.equals("stock")) {
+                    conditions.setSortBy(Book.SortColumn.STOCK);
+                } else if (sortBy.equals("bookid")) {
+                    conditions.setSortBy(Book.SortColumn.BOOK_ID);
+                }
+
+                String sortOrder = params.get("sortOrder");
+                if (sortOrder.equals("ASC")) {
+                    conditions.setSortOrder(SortOrder.ASC);
+                } else if (sortOrder.equals("DESC")) {
+                    conditions.setSortOrder(SortOrder.DESC);
+                }
             }
 
             conditions.setCategory(Category);
