@@ -391,13 +391,13 @@ public class Main {
                     conditions.setSortBy(Book.SortColumn.AUTHOR);
                 } else if (sortBy.equals("press")) {
                     conditions.setSortBy(Book.SortColumn.PRESS);
-                } else if (sortBy.equals("publishyear")) {
+                } else if (sortBy.equals("publishYear")) {
                     conditions.setSortBy(Book.SortColumn.PUBLISH_YEAR);
                 } else if (sortBy.equals("price")) {
                     conditions.setSortBy(Book.SortColumn.PRICE);
                 } else if (sortBy.equals("stock")) {
                     conditions.setSortBy(Book.SortColumn.STOCK);
-                } else if (sortBy.equals("bookid")) {
+                } else if (sortBy.equals("bookId")) {
                     conditions.setSortBy(Book.SortColumn.BOOK_ID);
                 }
 

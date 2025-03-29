@@ -47,7 +47,7 @@
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
                 <el-button type="primary" @click="toQueryBook.toQueryCategory = '', toQueryBook.toQueryTitle = '', toQueryBook.toQueryPress = '',
                 toQueryBook.toQueryAuthor = '', toQueryBook.toQueryMinPublishYear = '', toQueryBook.toQueryMaxPublishYear = '', toQueryBook.toQueryMinPrice = '',
-                toQueryBook.toQueryMaxPrice = '', toQueryBook.SortBy = '', toQueryBook.SortOrder = 'ASC', this.QueryResultVisible = false,
+                toQueryBook.toQueryMaxPrice = '', toQueryBook.SortBy = 'bookId', toQueryBook.SortOrder = 'ASC', this.QueryResultVisible = false,
                 this.QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
             </div>
         </div>
@@ -325,7 +325,9 @@
 
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 排序依据(英文小写)：
-                <el-input v-model="toQueryBook.SortBy" style="width: 15vw;" clearable />
+                <el-select v-model="toQueryBook.SortBy" style="width: 15vw;" placeholder="请选择">
+                    <el-option v-for="type in sortByTypes" :key="type.value" :label="type.label" :value="type.value" />
+                </el-select>
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 排序方式：
@@ -395,7 +397,41 @@ export default {
                 price: 99.9,
                 stock: 10
             }],
-            types: [
+            sortByTypes: [
+                {
+                    value: 'bookId',
+                    label: '图书ID'
+                },
+                {
+                    value: 'category',
+                    label: '图书类别'
+                },
+                {
+                    value: 'title',
+                    label: '图书名称'
+                },
+                {
+                    value: 'press',
+                    label: '图书出版社'
+                },
+                {
+                    value: 'publishYear',
+                    label: '图书年份'
+                },
+                {
+                    value: 'author',
+                    label: '图书作者'
+                },
+                {
+                    value: 'price',
+                    label: '图书价格'
+                },
+                {
+                    value: 'stock',
+                    label: '图书库存'
+                }
+            ],
+            sortOrdertypes: [
                 {
                     value: 'ASC',
                     label: '升序'
