@@ -1,4 +1,5 @@
 import com.sun.net.httpserver.Headers;
+import entities.Book;
 import entities.Card;
 import queries.ApiResult;
 import queries.BookQueryConditions;
@@ -212,7 +213,6 @@ public class Main {
 
             // 剩下三个和GET一样
             OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write("Card created successfully".getBytes());
             outputStream.close();
         }
 
@@ -389,7 +389,6 @@ public class Main {
             if (result.ok) {
                 // [{"count":1,"results":[{"author":"Yuuku","bookId":1,"category":"Nature","press":"Press-C","price":198.46,"publishYear":2000,"stock":0,"title":"Le Petit Prince"}]}]
                 JSONArray jsonArray = new JSONArray(result.payload);
-                System.out.println(jsonArray.toString());
                 JSONArray books = jsonArray.getJSONObject(0).getJSONArray("results");
                 response = books.toString();
             } else {
@@ -402,7 +401,42 @@ public class Main {
             outputStream.close();
         }
 
-        private void handlePostRequest(HttpExchange exchange) throws IOException {}
+        private void handlePostRequest(HttpExchange exchange) throws IOException {
+            InputStream requestBody = exchange.getRequestBody();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(requestBody));
+            StringBuilder requestBodyBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                requestBodyBuilder.append(line);
+            }
+            System.out.println("Received POST request to create book with data: " + requestBodyBuilder.toString());
+
+            LibraryManagementSystemImpl library = new LibraryManagementSystemImpl(connector);
+            JSONObject jsonObject = JSON.parseObject(requestBodyBuilder.toString());
+            String action = jsonObject.getString("action");
+            if (action.equals("AddBook")) {
+                Book book = new Book();
+                book.setTitle((String) jsonObject.get("title"));
+                book.setCategory((String) jsonObject.get("category"));
+                book.setPress((String) jsonObject.get("press"));
+                book.setAuthor((String) jsonObject.get("author"));
+                book.setPublishYear(jsonObject.getIntValue("publishYear"));
+                book.setPrice(jsonObject.getDoubleValue("price"));
+                book.setStock(jsonObject.getIntValue("stock"));
+
+                ApiResult result = library.storeBook(book);
+                if (result.ok) {
+                    System.out.println("Book created successfully");
+                } else {
+                    System.out.println(result.message);
+                }
+
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, 0);
+                OutputStream outputStream = exchange.getResponseBody();
+                outputStream.close();
+            }
+        }
         private void handleOptionsRequest(HttpExchange exchange) throws IOException {
             // OPTIONS请求直接返回204 No Content
             exchange.sendResponseHeaders(204, -1);

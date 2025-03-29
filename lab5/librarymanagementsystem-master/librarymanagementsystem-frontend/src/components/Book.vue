@@ -11,7 +11,9 @@
             <el-divider />
 
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
-                <el-button type="primary" @click="this.AddBookVisible = true " style="width: 120px; margin-right: 40px; ">图书入库</el-button>
+                <el-button type="primary" @click="this.AddBookVisible = true, toAddBook.toAddCategory = '', toAddBook.toAddTitle = '',
+                toAddBook.toAddPress = '', toAddBook.toAddPublishYear = '', toAddBook.toAddAuthor = '',
+                toAddBook.toAddPrice = '', toAddBook.toAddStock = ''" style="width: 120px; margin-right: 40px;">图书入库</el-button>
                 <el-button type="primary" @click="toQueryBook" style="width: 120px; margin-right: 40px;">增加库存</el-button>
                 <el-button type="primary" @click="toModifyBook" style="width: 120px; margin-right: 40px;">修改图书信息</el-button>
                 <el-button type="primary" @click="toDeleteBook" style="width: 120px;">删除图书</el-button>
@@ -39,7 +41,7 @@
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
                 <el-button type="primary" @click="toQueryBook.toQueryCategory = '', toQueryBook.toQueryTitle = '', toQueryBook.toQueryPress = '',
                 toQueryBook.toQueryAuthor = '', toQueryBook.toQueryMinPublishYear = '', toQueryBook.toQueryMaxPublishYear = '',
-                toQueryBook.toQueryMinPrice = '', toQueryBook.toQueryMaxPrice = '', QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
+                toQueryBook.toQueryMinPrice = '', toQueryBook.toQueryMaxPrice = '', this.QueryBookVisible = true" style="width: 120px; margin-right: 40px;">查询图书</el-button>
             </div>
         </div>
 
@@ -59,37 +61,40 @@
 
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书类别：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddCategory" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书名称：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddTitle" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书出版社：
-                <el-input v-model="toAddBook" style="width: 14vw;" clearable />
+                <el-input v-model="toAddBook.toAddPress" style="width: 14vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书年份：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddPublishYear" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书作者：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddAuthor" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书价格：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddPrice" style="width: 15vw;" clearable />
             </div>
             <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
                 图书库存：
-                <el-input v-model="toAddBook" style="width: 15vw;" clearable />
+                <el-input v-model="toAddBook.toAddStock" style="width: 15vw;" clearable />
             </div>
             <template #footer>
                 <span>
                     <el-button @click="AddBookVisible = false">取消</el-button>
                     <el-button type="primary" @click="ConfirmAddBook"
-                               :disabled="toAddBook.length === 0">确定</el-button>
+                               :disabled="toAddBook.toAddCategory.length === 0 || toAddBook.toAddTitle.length === 0 ||
+                                toAddBook.toAddPress.length === 0 || toAddBook.toAddPublishYear.length === 0 ||
+                                toAddBook.toAddAuthor.length === 0 || toAddBook.toAddPrice.length === 0 ||
+                                toAddBook.toAddStock.length === 0">确定</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -230,7 +235,15 @@ export default {
             ReturnBookVisible: false, // 归还图书对话框
             QueryBookVisible: false, // 查询图书对话框
             QueryResultVisible: false, // 查询结果对话框
-            toAddBook: '', // 添加图书内容
+            toAddBook: {
+                toAddCategory: '',
+                toAddTitle: '',
+                toAddPress: '',
+                toAddPublishYear: '',
+                toAddAuthor: '',
+                toAddPrice: '',
+                toAddStock: ''
+            }, // 待添加图书信息
             toAddBatch: '', // 批量添加图书内容
             toModifyBook: '', // 修改图书内容
             toDeleteBook: '', // 删除图书内容
@@ -250,6 +263,21 @@ export default {
     },
     methods: {
         ConfirmAddBook() {
+            axios.post("/book",
+                {
+                    action: "AddBook",
+                    category: this.toAddBook.toAddCategory,
+                    title: this.toAddBook.toAddTitle,
+                    press: this.toAddBook.toAddPress,
+                    publishYear: this.toAddBook.toAddPublishYear,
+                    author: this.toAddBook.toAddAuthor,
+                    price: this.toAddBook.toAddPrice,
+                    stock: this.toAddBook.toAddStock
+                })
+                .then(response => {
+                    ElMessage.success("图书入库成功") // 显示消息提醒
+                    this.AddBookVisible = false // 将对话框设置为不可见
+                })
         },
         ConfirmAddBatch(){},
 
