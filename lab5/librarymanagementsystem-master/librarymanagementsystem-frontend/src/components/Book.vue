@@ -14,10 +14,15 @@
                 <el-button type="primary" @click="this.AddBookVisible = true, toAddBook.toAddCategory = '', toAddBook.toAddTitle = '',
                 toAddBook.toAddPress = '', toAddBook.toAddPublishYear = '', toAddBook.toAddAuthor = '',
                 toAddBook.toAddPrice = '', toAddBook.toAddStock = ''" style="width: 120px; margin-right: 40px;">图书入库</el-button>
+
                 <el-button type="primary" @click="this.ModifyStockVisible = true, toModifyStock.toModifyStockbookId = '',
                 toModifyStock.toModifyStockNum = ''" style="width: 120px; margin-right: 40px;">修改库存</el-button>
-                <el-button type="primary" @click="toModifyBook" style="width: 120px; margin-right: 40px;">修改图书信息</el-button>
-                <el-button type="primary" @click="toDeleteBook" style="width: 120px;">删除图书</el-button>
+
+                <el-button type="primary" @click="this.ModifyBookVisible = true, toModifyBook.toModifyBookId = '',toModifyBook.toModifyCategory = '',
+                toModifyBook.toModifyTitle = '', toModifyBook.toModifyPress = '', toModifyBook.toModifyPublishYear = '', toModifyBook.toModifyAuthor = '',
+                toModifyBook.toModifyPrice = ''" style="width: 120px; margin-right: 40px;">修改图书信息</el-button>
+
+                <el-button type="primary" @click="this.DeleteBookVisible = true, toDeleteBook.toDeleteBookId = ''" style="width: 120px; margin-right: 40px;">删除图书</el-button>
             </div>`
         </div>
 
@@ -100,7 +105,7 @@
             </template>
         </el-dialog>
 
-        <! -- 批量入库对话框 -->
+        <!-- 批量入库对话框 -->
         <el-dialog v-model="AddBatchVisible" width="30%" font-weight="bold" align-center>
             <template #title>
                 <span style="font-weight: bold; font-size: 1.4em" >图书入库</span>
@@ -141,14 +146,83 @@
             <template #footer>
                 <span>
                     <el-button @click="ModifyStockVisible = false">取消</el-button>
-                    <el-button type="primary" @click="ConfirmModifyBook"
+                    <el-button type="primary" @click="ConfirmModifyStock"
                                :disabled="toModifyStock.toModifyStockbookId.length === 0 || toModifyStock.toModifyStockNum.length === 0">确定</el-button>
                 </span>
             </template>
         </el-dialog>
 
+        <!-- 修改图书信息对话框 -->
+        <el-dialog v-model="ModifyBookVisible" width="30%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >修改图书信息</span>
+            </template>
 
-        <! -- 查询对话框 -->
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书ID：
+                <el-input v-model="toModifyBook.toModifyBookId" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书类别：
+                <el-input v-model="toModifyBook.toModifyCategory" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书名称：
+                <el-input v-model="toModifyBook.toModifyTitle" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书出版社：
+                <el-input v-model="toModifyBook.toModifyPress" style="width: 14vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书年份：
+                <el-input v-model="toModifyBook.toModifyPublishYear" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书作者：
+                <el-input v-model="toModifyBook.toModifyAuthor" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书价格：
+                <el-input v-model="toModifyBook.toModifyPrice" style="width: 15vw;" clearable />
+            </div>
+            <template #footer>
+                <span>
+                    <el-button @click="ModifyBookVisible = false">取消</el-button>
+                    <el-button type="primary" @click="ConfirmModifyBook"
+                               :disabled="toModifyBook.toModifyBookId .length === 0 || toModifyBook.toModifyCategory.length === 0 ||
+                                toModifyBook.toModifyTitle.length === 0 || toModifyBook.toModifyPress.length === 0 ||
+                                toModifyBook.toModifyPublishYear.length === 0 || toModifyBook.toModifyAuthor.length === 0 ||
+                                toModifyBook.toModifyPrice.length === 0">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 删除图书对话框 -->
+        <el-dialog v-model="DeleteBookVisible" width="30%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >删除图书</span>
+            </template>
+
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书ID：
+                <el-input v-model="toDeleteBook.toDeleteBookId" style="width: 15vw;" clearable />
+            </div>
+            <template #footer>
+                <span>
+                    <el-button @click="DeleteBookVisible = false">取消</el-button>
+                    <el-button type="primary" @click="ConfirmDeleteBook"
+                               :disabled="toDeleteBook.toDeleteBookId.length === 0">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+
+        <!-- 查询对话框 -->
         <el-dialog v-model="QueryBookVisible" width="30%" font-weight="bold" align-center>
             <template #title>
                 <span style="font-weight: bold; font-size: 1.4em" >图书查询</span>
@@ -196,7 +270,7 @@
             </template>
         </el-dialog>
 
-        <! -- 查询结果对话框 -->
+        <!-- 查询结果对话框 -->
         <el-dialog v-model="QueryResultVisible" width="60%" font-weight="bold" align-center>
             <template #title>
                 <span style="font-weight: bold; font-size: 1.4em" >查询结果</span>
@@ -273,8 +347,18 @@ export default {
                 toModifyStockbookId: '',
                 toModifyStockNum: ''
             }, // 修改图书库存内容
-            toModifyBook: '', // 修改图书内容
-            toDeleteBook: '', // 删除图书内容
+            toModifyBook: {
+                toModifyBookId: '',
+                toModifyCategory: '',
+                toModifyTitle: '',
+                toModifyPress: '',
+                toModifyPublishYear: '',
+                toModifyAuthor: '',
+                toModifyPrice: '',
+            }, // 修改图书内容
+            toDeleteBook: {
+                toDeleteBookId: ''
+            }, // 删除图书内容
             toBorrowBook: '', // 借阅图书内容
             toReturnBook: '', // 归还图书内容
             toQueryBook: {
@@ -312,7 +396,7 @@ export default {
         },
         ConfirmAddBatch(){},
 
-        ConfirmModifyBook() {
+        ConfirmModifyStock() {
             axios.post("/book",
                 {
                     action: "ModifyStock",
@@ -327,7 +411,40 @@ export default {
                     ElMessage.error(error.response.data) // 显示错误消息
                 })
         },
-
+        ConfirmModifyBook() {
+            axios.post("/book",
+                {
+                    action: "ModifyBook",
+                    bookId: this.toModifyBook.toModifyBookId,
+                    category: this.toModifyBook.toModifyCategory,
+                    title: this.toModifyBook.toModifyTitle,
+                    press: this.toModifyBook.toModifyPress,
+                    publishYear: this.toModifyBook.toModifyPublishYear,
+                    author: this.toModifyBook.toModifyAuthor,
+                    price: this.toModifyBook.toModifyPrice
+                })
+                .then(response => {
+                    ElMessage.success(response.data)
+                    this.ModifyBookVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
+                })
+        },
+        ConfirmDeleteBook() {
+            axios.post("/book",
+                {
+                    action: "DeleteBook",
+                    bookId: this.toDeleteBook.toDeleteBookId
+                })
+                .then(response => {
+                    ElMessage.success(response.data)
+                    this.DeleteBookVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
+                })
+        },
         async ConfirmQueryBook() {
             this.tableData = [] // 清空列表
             let response = await axios.get('/book',

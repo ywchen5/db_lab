@@ -462,6 +462,39 @@ public class Main {
                     response = result.message;
                     exchange.sendResponseHeaders(405, response.getBytes().length);
                 }
+            } else if (action.equals("ModifyBook")) {
+                Book book = new Book();
+                book.setBookId(jsonObject.getIntValue("bookId"));
+                book.setTitle((String) jsonObject.get("title"));
+                book.setCategory((String) jsonObject.get("category"));
+                book.setPress((String) jsonObject.get("press"));
+                book.setAuthor((String) jsonObject.get("author"));
+                book.setPublishYear(jsonObject.getIntValue("publishYear"));
+                book.setPrice(jsonObject.getDoubleValue("price"));
+                book.setStock(jsonObject.getIntValue("stock"));
+
+                ApiResult result = library.modifyBookInfo(book);
+                if (result.ok) {
+                    System.out.println("Book modified successfully");
+                    response = "Book modified successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                } else {
+                    System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
+                }
+            } else if (action.equals("DeleteBook")) {
+                int bookId = jsonObject.getIntValue("bookId");
+                ApiResult result = library.removeBook(bookId);
+                if (result.ok) {
+                    System.out.println("Book deleted successfully");
+                    response = "Book deleted successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                } else {
+                    System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
+                }
             }
 
             OutputStream outputStream = exchange.getResponseBody();
