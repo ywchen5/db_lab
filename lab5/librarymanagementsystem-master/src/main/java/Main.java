@@ -1,5 +1,6 @@
 import com.sun.net.httpserver.Headers;
 import entities.Book;
+import entities.Borrow;
 import entities.Card;
 import queries.ApiResult;
 import queries.BookQueryConditions;
@@ -489,6 +490,46 @@ public class Main {
                 if (result.ok) {
                     System.out.println("Book deleted successfully");
                     response = "Book deleted successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                } else {
+                    System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
+                }
+            } else if (action.equals("BorrowBook")) {
+                Borrow borrow = new Borrow();
+                int bookId = jsonObject.getIntValue("bookId");
+                int cardId = jsonObject.getIntValue("cardId");
+                long borrowTime = jsonObject.getLong("borrowTime");
+
+                borrow.setBookId(bookId);
+                borrow.setCardId(cardId);
+                borrow.setBorrowTime(borrowTime);
+                borrow.setReturnTime(0);
+
+                ApiResult result = library.borrowBook(borrow);
+                if (result.ok) {
+                    System.out.println("Book borrowed successfully");
+                    response = "Book borrowed successfully";
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                } else {
+                    System.out.println(result.message);
+                    response = result.message;
+                    exchange.sendResponseHeaders(405, response.getBytes().length);
+                }
+            } else if (action.equals("ReturnBook")) {
+                Borrow borrow = new Borrow();
+                int bookId = jsonObject.getIntValue("bookId");
+                int cardId = jsonObject.getIntValue("cardId");
+                long returnTime = jsonObject.getLong("returnTime");
+                borrow.setBookId(bookId);
+                borrow.setCardId(cardId);
+                borrow.setReturnTime(returnTime);
+
+                ApiResult result = library.returnBook(borrow);
+                if (result.ok) {
+                    System.out.println("Book returned successfully");
+                    response = "Book returned successfully";
                     exchange.sendResponseHeaders(200, response.getBytes().length);
                 } else {
                     System.out.println(result.message);

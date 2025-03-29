@@ -33,8 +33,8 @@
             <el-divider />
 
             <div style="margin-left: 40px; margin-top: 30px; font-size: 1.4em; font-weight: bold;">
-                <el-button type="primary" @click="toBorrowBook" style="width: 120px; margin-right: 40px;">借阅书籍</el-button>
-                <el-button type="primary" @click="toReturnBook" style="width: 120px;">归还书籍</el-button>
+                <el-button type="primary" @click="BorrowBookVisible = true, toBorrowBook.toBorrowbookId = '', toBorrowBook.toBorrowcardId = ''" style="width: 120px; margin-right: 40px;">借阅书籍</el-button>
+                <el-button type="primary" @click="ReturnBookVisible = true, toReturnBook.toReturnbookId = '', toReturnBook.toReturncardId = ''" style="width: 120px; margin-right: 40px;">归还书籍</el-button>
             </div>
         </div>
 
@@ -221,6 +221,56 @@
             </template>
         </el-dialog>
 
+        <!-- 借阅图书对话框 -->
+        <el-dialog v-model="BorrowBookVisible" width="30%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >借阅图书</span>
+            </template>
+
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书ID：
+                <el-input v-model="toBorrowBook.toBorrowbookId" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                借书证ID：
+                <el-input v-model="toBorrowBook.toBorrowcardId" style="width: 15vw;" clearable />
+            </div>
+            <template #footer>
+                <span>
+                    <el-button @click="BorrowBookVisible = false">取消</el-button>
+                    <el-button type="primary" @click="ConfirmBorrowBook"
+                               :disabled="toBorrowBook.toBorrowbookId.length === 0 || toBorrowBook.toBorrowcardId.length === 0">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 归还图书对话框 -->
+        <el-dialog v-model="ReturnBookVisible" width="30%" font-weight="bold" align-center>
+            <template #title>
+                <span style="font-weight: bold; font-size: 1.4em" >归还图书</span>
+            </template>
+
+            <el-divider />
+
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                图书ID：
+                <el-input v-model="toReturnBook.toReturnbookId" style="width: 15vw;" clearable />
+            </div>
+            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
+                借书证ID：
+                <el-input v-model="toReturnBook.toReturncardId" style="width: 15vw;" clearable />
+            </div>
+
+            <template #footer>
+                <span>
+                    <el-button @click="ReturnBookVisible = false">取消</el-button>
+                    <el-button type="primary" @click="ConfirmReturnBook"
+                               :disabled="toReturnBook.toReturnbookId.length === 0 || toReturnBook.toReturncardId.length === 0">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
 
         <!-- 查询对话框 -->
         <el-dialog v-model="QueryBookVisible" width="30%" font-weight="bold" align-center>
@@ -359,8 +409,16 @@ export default {
             toDeleteBook: {
                 toDeleteBookId: ''
             }, // 删除图书内容
-            toBorrowBook: '', // 借阅图书内容
-            toReturnBook: '', // 归还图书内容
+            toBorrowBook: {
+                toBorrowbookId: '',
+                toBorrowcardId: '',
+                borrowTime: ''
+            }, // 借阅图书内容
+            toReturnBook: {
+                toReturnbookId: '',
+                toReturncardId: '',
+                returnTime: ''
+            }, // 归还图书内容
             toQueryBook: {
                 toQueryCategory: '',
                 toQueryTitle: '',
@@ -375,7 +433,7 @@ export default {
     },
     methods: {
         ConfirmAddBook() {
-            axios.post("/book",
+              axios.post("/book",
                 {
                     action: "AddBook",
                     category: this.toAddBook.toAddCategory,
@@ -440,6 +498,40 @@ export default {
                 .then(response => {
                     ElMessage.success(response.data)
                     this.DeleteBookVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
+                })
+        },
+        ConfirmBorrowBook() {
+            this.toBorrowBook.borrowTime = Date.now()
+            axios.post("/book",
+                {
+                    action: "BorrowBook",
+                    bookId: this.toBorrowBook.toBorrowbookId,
+                    cardId: this.toBorrowBook.toBorrowcardId,
+                    borrowTime: this.toBorrowBook.borrowTime
+                })
+                .then(response => {
+                    ElMessage.success(response.data)
+                    this.BorrowBookVisible = false // 将对话框设置为不可见
+                })
+                .catch(error => {
+                    ElMessage.error(error.response.data) // 显示错误消息
+                })
+        },
+        ConfirmReturnBook() {
+            this.toReturnBook.returnTime = Date.now()
+            axios.post("/book",
+                {
+                    action: "ReturnBook",
+                    bookId: this.toReturnBook.toReturnbookId,
+                    cardId: this.toReturnBook.toReturncardId,
+                    returnTime: this.toReturnBook.returnTime
+                })
+                .then(response => {
+                    ElMessage.success(response.data)
+                    this.ReturnBookVisible = false // 将对话框设置为不可见
                 })
                 .catch(error => {
                     ElMessage.error(error.response.data) // 显示错误消息
