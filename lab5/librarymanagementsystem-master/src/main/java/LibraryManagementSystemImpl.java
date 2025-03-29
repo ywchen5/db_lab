@@ -89,7 +89,7 @@ public class LibraryManagementSystemImpl implements LibraryManagementSystem {
                     return new ApiResult(false, "No such book to update stock");
                 }
                 commit(conn); // commit the transaction
-                return new ApiResult(true, "Stock updated successfully");
+                return new ApiResult(true, stock + deltaStock); // return the new stock
             }
         } catch (SQLException e) {
             return new ApiResult(false, e.getMessage());

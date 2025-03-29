@@ -491,8 +491,8 @@ public class Main {
                 int deltaStock = jsonObject.getIntValue("deltaStock");
                 ApiResult result = library.incBookStock(bookId, deltaStock);
                 if (result.ok) {
-                    System.out.println("Book stock modified successfully");
-                    response = "Book stock modified successfully";
+                    System.out.println("Book stock modified successfully, the current stock is " + result.payload);
+                    response = "Book stock modified successfully, the current stock is " + result.payload;
                     exchange.sendResponseHeaders(200, response.getBytes().length);
                 } else {
                     System.out.println(result.message);
